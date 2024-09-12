@@ -1,7 +1,7 @@
 import { Player } from "./player.js";
 import { EnemyManager } from "./enemyManager.js";
 import { Bullet } from "./bullet.js";
-import { drawStartButton } from './boton.js';
+import { drawStartButton } from "./boton.js";
 
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
@@ -14,7 +14,6 @@ const playerHeight = 48;
 
 const enemyWidth = 48;
 const enemyHeight = 48;
-
 
 let player = new Player(
   canvas.width / 2 - playerWidth / 2,
@@ -31,7 +30,13 @@ let level = 1;
 let maxEnemies = 10;
 let isPlaying = false;
 
-let enemyManager = new EnemyManager(canvas.width, canvas.height,enemyWidth, enemyHeight, level);
+let enemyManager = new EnemyManager(
+  canvas.width,
+  canvas.height,
+  enemyWidth,
+  enemyHeight,
+  level
+);
 
 let buttonBounds = { x: 0, y: 0, width: 200, height: 60 };
 
@@ -73,7 +78,7 @@ function update(time = 0) {
       x: canvas.width / 2 - 100,
       y: canvas.height / 2 - 30,
       width: 200,
-      height: 60
+      height: 60,
     };
     drawStartButton(ctx, canvas.width, canvas.height);
     return;
@@ -93,7 +98,7 @@ function update(time = 0) {
 
   if (score >= maxEnemies) {
     level++;
-    maxEnemies += level * 10 ; 
+    maxEnemies += level * 10;
     enemyManager.levelUp(level);
   }
 
@@ -101,14 +106,16 @@ function update(time = 0) {
 }
 
 canvas.addEventListener("click", (e) => {
-  if (!isPlaying &&
+  if (
+    !isPlaying &&
     e.offsetX > buttonBounds.x &&
     e.offsetX < buttonBounds.x + buttonBounds.width &&
     e.offsetY > buttonBounds.y &&
-    e.offsetY < buttonBounds.y + buttonBounds.height) {
+    e.offsetY < buttonBounds.y + buttonBounds.height
+  ) {
     isPlaying = true;
     enemyManager.init();
-    update(); 
+    update();
   }
 });
 
@@ -117,13 +124,15 @@ canvas.addEventListener("mousemove", (e) => {
     const mouseX = e.offsetX;
     const mouseY = e.offsetY;
 
-    if (mouseX > buttonBounds.x &&
+    if (
+      mouseX > buttonBounds.x &&
       mouseX < buttonBounds.x + buttonBounds.width &&
       mouseY > buttonBounds.y &&
-      mouseY < buttonBounds.y + buttonBounds.height) {
-      canvas.style.cursor = 'pointer';
+      mouseY < buttonBounds.y + buttonBounds.height
+    ) {
+      canvas.style.cursor = "pointer";
     } else {
-      canvas.style.cursor = 'default'; 
+      canvas.style.cursor = "default";
     }
   }
 });
