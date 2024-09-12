@@ -7,11 +7,14 @@ const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
 
 canvas.width = 800;
-canvas.height = 600;
+canvas.height = 800;
 
-const playerWidth = 64;
-const playerHeight = 64;
-const enemyImgSrc = "img/enemigos-dib.png";
+const playerWidth = 48;
+const playerHeight = 48;
+
+const enemyWidth = 48;
+const enemyHeight = 48;
+
 
 let player = new Player(
   canvas.width / 2 - playerWidth / 2,
@@ -25,10 +28,10 @@ let player = new Player(
 let bullets = [];
 let score = 0;
 let level = 1;
-let maxEnemies = 30;
+let maxEnemies = 10;
 let isPlaying = false;
 
-let enemyManager = new EnemyManager(enemyImgSrc, canvas.width, canvas.height, level);
+let enemyManager = new EnemyManager(canvas.width, canvas.height,enemyWidth, enemyHeight, level);
 
 let buttonBounds = { x: 0, y: 0, width: 200, height: 60 };
 
@@ -90,7 +93,7 @@ function update(time = 0) {
 
   if (score >= maxEnemies) {
     level++;
-    maxEnemies += level * 20; 
+    maxEnemies += level * 10 ; 
     enemyManager.levelUp(level);
   }
 
