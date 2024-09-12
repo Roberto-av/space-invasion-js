@@ -12,28 +12,56 @@ export class Player {
     this.canvasWidth = canvasWidth;
     this.canvasHeight = canvasHeight;
     this.image = new Image();
-    this.image.src = "img/nave.png"; 
+    this.image.src = "img/nave.png";
+    this.keys = {};
   }
 
   draw(ctx) {
     ctx.drawImage(
       this.image,
-      0, 
-      0, 
+      0,
+      0,
       this.image.width,
       this.image.height,
-      this.x, 
+      this.x,
       this.y,
       this.width,
       this.height
     );
   }
 
-  move() {
+  handleKeyDown(e, bullets) {
+    this.keys[e.key] = true;
+    if (e.key === "Enter") {
+      this.shoot(bullets);
+    }
+  }
+
+  handleKeyUp(e) {
+    this.keys[e.key] = false;
+  }
+
+  move(deltaTime) {
+    if (this.keys["d"] || this.keys["D"]) {
+      this.dx = this.speed * deltaTime;
+    } else if (this.keys["a"] || this.keys["A"]) {
+      this.dx = -this.speed * deltaTime;
+    } else {
+      this.dx = 0;
+    }
+
+    if (this.keys["w"] || this.keys["W"]) {
+      this.dy = -this.speed * deltaTime;
+    } else if (this.keys["s"] || this.keys["S"]) {
+      this.dy = this.speed * deltaTime;
+    } else {
+      this.dy = 0;
+    }
+
     this.x += this.dx;
     this.y += this.dy;
 
-    // Limitar los bordes del canvas usando el ancho y alto guardados
+    // Limitar los bordes del canvas
     if (this.x < 0) this.x = 0;
     if (this.x + this.width > this.canvasWidth)
       this.x = this.canvasWidth - this.width;
