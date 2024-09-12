@@ -1,6 +1,7 @@
 import { Player } from "./player.js";
-import { Enemy } from "./enemy.js";
+import { EnemyManager } from "./enemyManager.js";
 import { Bullet } from "./bullet.js";
+import { drawStartButton } from './boton.js';
 
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
@@ -12,7 +13,6 @@ const playerWidth = 64;
 const playerHeight = 64;
 const enemyImgSrc = "img/enemigos-dib.png";
 
-// Crear el jugador
 let player = new Player(
   canvas.width / 2 - playerWidth / 2,
   canvas.height - playerHeight - 10,
@@ -23,27 +23,19 @@ let player = new Player(
   canvas.height
 );
 let bullets = [];
-let enemies = [];
 let score = 0;
+let level = 1;
+let maxEnemies = 30;
+let isPlaying = false;
 
-function createEnemy() {
-  const x = Math.random() * (canvas.width - 50);
-  const enemy = new Enemy(
-    x,
-    0,
-    50,
-    50,
-    1,
-    enemyImgSrc,
-    canvas.width,
-    canvas.height
-  );
-  enemies.push(enemy);
-}
+let enemyManager = new EnemyManager(enemyImgSrc, canvas.width, canvas.height, level);
 
+let buttonBounds = { x: 0, y: 0, width: 200, height: 60 };
+
+// Verificar colisión
 function checkCollision() {
   bullets.forEach((bullet, bulletIndex) => {
-    enemies.forEach((enemy, enemyIndex) => {
+    enemyManager.enemies.forEach((enemy, enemyIndex) => {
       if (
         bullet.x < enemy.x + enemy.width &&
         bullet.x + bullet.width > enemy.x &&
@@ -51,25 +43,38 @@ function checkCollision() {
         bullet.height + bullet.y > enemy.y
       ) {
         bullets.splice(bulletIndex, 1);
-        enemies.splice(enemyIndex, 1);
+        enemyManager.enemies.splice(enemyIndex, 1);
         score++;
       }
     });
   });
 }
 
-function drawScore() {
+function drawScoreAndLevel() {
   ctx.fillStyle = "white";
   ctx.font = "20px Arial";
-  ctx.fillText(`Score: ${score}`, 10, 30);
+  ctx.fillText(`Score: ${score}`, 60, 30);
+  ctx.fillText(`Level: ${level}`, canvas.width - 100, 30);
 }
 
+// Actualizar juego
 let lastTime = 0;
 function update(time = 0) {
   const deltaTime = (time - lastTime) / 1000;
   lastTime = time;
 
   ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  if (!isPlaying) {
+    buttonBounds = {
+      x: canvas.width / 2 - 100,
+      y: canvas.height / 2 - 30,
+      width: 200,
+      height: 60
+    };
+    drawStartButton(ctx, canvas.width, canvas.height);
+    return;
+  }
 
   player.draw(ctx);
   player.move(deltaTime);
@@ -79,25 +84,52 @@ function update(time = 0) {
     bullet.move();
   });
 
-  enemies.forEach((enemy) => {
-    enemy.draw(ctx);
-    enemy.move();
-  });
-
+  enemyManager.updateEnemies(ctx);
   checkCollision();
-  drawScore();
+  drawScoreAndLevel();
+
+  if (score >= maxEnemies) {
+    level++;
+    maxEnemies += level * 20; 
+    enemyManager.levelUp(level);
+  }
 
   requestAnimationFrame(update);
 }
 
+canvas.addEventListener("click", (e) => {
+  if (!isPlaying &&
+    e.offsetX > buttonBounds.x &&
+    e.offsetX < buttonBounds.x + buttonBounds.width &&
+    e.offsetY > buttonBounds.y &&
+    e.offsetY < buttonBounds.y + buttonBounds.height) {
+    isPlaying = true;
+    enemyManager.init();
+    update(); 
+  }
+});
+
+canvas.addEventListener("mousemove", (e) => {
+  if (!isPlaying) {
+    const mouseX = e.offsetX;
+    const mouseY = e.offsetY;
+
+    if (mouseX > buttonBounds.x &&
+      mouseX < buttonBounds.x + buttonBounds.width &&
+      mouseY > buttonBounds.y &&
+      mouseY < buttonBounds.y + buttonBounds.height) {
+      canvas.style.cursor = 'pointer';
+    } else {
+      canvas.style.cursor = 'default'; 
+    }
+  }
+});
+
 document.addEventListener("keydown", (e) => {
-  player.handleKeyDown(e, bullets);
+  if (isPlaying) player.handleKeyDown(e, bullets);
 });
-
 document.addEventListener("keyup", (e) => {
-  player.handleKeyUp(e);
+  if (isPlaying) player.handleKeyUp(e);
 });
-
-setInterval(createEnemy, 1000);
 
 update();
