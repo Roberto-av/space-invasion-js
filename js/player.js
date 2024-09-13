@@ -1,7 +1,16 @@
 import { Bullet } from "./bullet.js";
 
 export class Player {
-  constructor(x, y, width, height, speed, canvasWidth, canvasHeight) {
+  constructor(
+    x,
+    y,
+    width,
+    height,
+    speed,
+    canvasWidth,
+    canvasHeight,
+    shootSound
+  ) {
     this.x = x;
     this.y = y;
     this.width = width;
@@ -18,6 +27,9 @@ export class Player {
     // Inicialización de temporización de disparo
     this.lastShotTime = 0;
     this.shootInterval = 500; // Intervalo de disparo en milisegundos
+
+    // Sonido de disparo
+    this.shootSound = shootSound;
   }
 
   draw(ctx) {
@@ -98,6 +110,15 @@ export class Player {
       );
 
       this.lastShotTime = currentTime; // Actualizar el tiempo del último disparo
+
+      // Reproducir sonido de disparo
+      this.playShootSound();
     }
+  }
+
+  playShootSound() {
+    // Reiniciar la reproducción del sonido de disparo
+    this.shootSound.currentTime = 0;
+    this.shootSound.play();
   }
 }

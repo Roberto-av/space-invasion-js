@@ -1,9 +1,11 @@
+// game.js
 import { Player } from "./player.js";
 import { EnemyManager } from "./enemyManager.js";
 import { Bullet } from "./bullet.js";
 import { drawStartButton } from "./boton.js";
 import { Explosion } from "./explosion.js";
-import { Star } from "./star.js"; // Importando la clase Star
+import { Star } from "./star.js";
+import { SoundManager } from "./soundManager.js";
 
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
@@ -13,9 +15,10 @@ canvas.height = 800;
 
 const playerWidth = 48;
 const playerHeight = 48;
-
 const enemyWidth = 48;
 const enemyHeight = 48;
+
+const soundManager = new SoundManager();
 
 let player = new Player(
   canvas.width / 2 - playerWidth / 2,
@@ -24,11 +27,12 @@ let player = new Player(
   playerHeight,
   400,
   canvas.width,
-  canvas.height
+  canvas.height,
+  soundManager.shootSound 
 );
 let bullets = [];
 let explosions = [];
-let stars = []; // Arreglo para las estrellas
+let stars = []; 
 let score = 0;
 let level = 1;
 let maxEnemies = 10;
@@ -59,6 +63,10 @@ function updateStars() {
     star.update();
     star.draw(ctx);
   });
+}
+
+function playShortExplosionSound() {
+  soundManager.playExplosionSound();
 }
 
 // Verificar colisión
@@ -98,6 +106,7 @@ function checkCollision() {
           )
         );
 
+        playShortExplosionSound();
         score++;
       }
     });
@@ -130,7 +139,7 @@ function update(time = 0) {
     return;
   }
 
-  updateStars(); 
+  updateStars();
 
   player.draw(ctx);
   player.move(deltaTime);
