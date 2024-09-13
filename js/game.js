@@ -2,6 +2,7 @@ import { Player } from "./player.js";
 import { EnemyManager } from "./enemyManager.js";
 import { Bullet } from "./bullet.js";
 import { drawStartButton } from "./boton.js";
+import { Explosion } from "./explosion.js";
 
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
@@ -25,6 +26,7 @@ let player = new Player(
   canvas.height
 );
 let bullets = [];
+let explosions = [];
 let score = 0;
 let level = 1;
 let maxEnemies = 10;
@@ -52,6 +54,31 @@ function checkCollision() {
       ) {
         bullets.splice(bulletIndex, 1);
         enemyManager.enemies.splice(enemyIndex, 1);
+
+        const explosionImages = [
+          "img/explosion/explosion-1-1.png",
+          "img/explosion/explosion-1-2.png",
+          "img/explosion/explosion-1-3.png",
+          "img/explosion/explosion-1-4.png",
+          "img/explosion/explosion-1-5.png",
+          "img/explosion/explosion-1-6.png",
+          "img/explosion/explosion-1-7.png",
+          "img/explosion/explosion-1-8.png",
+          "img/explosion/explosion-1-9.png",
+          "img/explosion/explosion-1-10.png",
+          "img/explosion/explosion-1-11.png",
+          "img/explosion/explosion-1-12.png",
+        ];
+        explosions.push(
+          new Explosion(
+            enemy.x,
+            enemy.y,
+            enemy.width,
+            enemy.height,
+            explosionImages
+          )
+        );
+
         score++;
       }
     });
@@ -95,6 +122,14 @@ function update(time = 0) {
   enemyManager.updateEnemies(ctx);
   checkCollision();
   drawScoreAndLevel();
+
+  // Dibujar las explosiones
+  explosions.forEach((explosion, index) => {
+    explosion.draw(ctx, time);
+    if (explosion.finished) {
+      explosions.splice(index, 1); 
+    }
+  });
 
   if (score >= maxEnemies) {
     level++;
