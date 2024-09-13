@@ -3,6 +3,7 @@ import { EnemyManager } from "./enemyManager.js";
 import { Bullet } from "./bullet.js";
 import { drawStartButton } from "./boton.js";
 import { Explosion } from "./explosion.js";
+import { Star } from "./star.js"; // Importando la clase Star
 
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
@@ -27,6 +28,7 @@ let player = new Player(
 );
 let bullets = [];
 let explosions = [];
+let stars = []; // Arreglo para las estrellas
 let score = 0;
 let level = 1;
 let maxEnemies = 10;
@@ -41,6 +43,23 @@ let enemyManager = new EnemyManager(
 );
 
 let buttonBounds = { x: 0, y: 0, width: 200, height: 60 };
+
+function initStars() {
+  for (let i = 0; i < 100; i++) {
+    let x = Math.random() * canvas.width;
+    let y = Math.random() * canvas.height;
+    let radius = Math.random() * 2;
+    let speed = Math.random() * 2 + 1;
+    stars.push(new Star(x, y, radius, speed, canvas.height));
+  }
+}
+
+function updateStars() {
+  stars.forEach((star) => {
+    star.update();
+    star.draw(ctx);
+  });
+}
 
 // Verificar colisión
 function checkCollision() {
@@ -111,6 +130,8 @@ function update(time = 0) {
     return;
   }
 
+  updateStars(); 
+
   player.draw(ctx);
   player.move(deltaTime);
 
@@ -127,7 +148,7 @@ function update(time = 0) {
   explosions.forEach((explosion, index) => {
     explosion.draw(ctx, time);
     if (explosion.finished) {
-      explosions.splice(index, 1); 
+      explosions.splice(index, 1);
     }
   });
 
@@ -179,4 +200,5 @@ document.addEventListener("keyup", (e) => {
   if (isPlaying) player.handleKeyUp(e);
 });
 
+initStars();
 update();
