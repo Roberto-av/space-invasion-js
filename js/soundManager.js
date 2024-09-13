@@ -1,4 +1,3 @@
-// soundManager.js
 export class SoundManager {
   constructor() {
     this.backgroundMusic = new Audio("sonidos/fondo/neon-gaming-128925.mp3");
@@ -8,7 +7,6 @@ export class SoundManager {
     // Configurar volumen y bucle
     this.backgroundMusic.volume = 0.2;
     this.backgroundMusic.loop = true;
-    this.backgroundMusic.play();
 
     this.shootSound.volume = 0.5;
     this.explosionSound.volume = 0.7;

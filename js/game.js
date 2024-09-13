@@ -1,4 +1,3 @@
-// game.js
 import { Player } from "./player.js";
 import { EnemyManager } from "./enemyManager.js";
 import { Bullet } from "./bullet.js";
@@ -11,7 +10,7 @@ const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
 
 canvas.width = 800;
-canvas.height = 800;
+canvas.height = 600;
 
 const playerWidth = 48;
 const playerHeight = 48;
@@ -28,11 +27,11 @@ let player = new Player(
   400,
   canvas.width,
   canvas.height,
-  soundManager.shootSound 
+  soundManager.shootSound
 );
 let bullets = [];
 let explosions = [];
-let stars = []; 
+let stars = [];
 let score = 0;
 let level = 1;
 let maxEnemies = 10;
@@ -135,7 +134,6 @@ function update(time = 0) {
       width: 200,
       height: 60,
     };
-    drawStartButton(ctx, canvas.width, canvas.height);
     return;
   }
 
@@ -170,35 +168,12 @@ function update(time = 0) {
   requestAnimationFrame(update);
 }
 
-canvas.addEventListener("click", (e) => {
-  if (
-    !isPlaying &&
-    e.offsetX > buttonBounds.x &&
-    e.offsetX < buttonBounds.x + buttonBounds.width &&
-    e.offsetY > buttonBounds.y &&
-    e.offsetY < buttonBounds.y + buttonBounds.height
-  ) {
+document.getElementById("startButton").addEventListener("click", () => {
+  if (!isPlaying) {
     isPlaying = true;
     enemyManager.init();
+    soundManager.backgroundMusic.play();
     update();
-  }
-});
-
-canvas.addEventListener("mousemove", (e) => {
-  if (!isPlaying) {
-    const mouseX = e.offsetX;
-    const mouseY = e.offsetY;
-
-    if (
-      mouseX > buttonBounds.x &&
-      mouseX < buttonBounds.x + buttonBounds.width &&
-      mouseY > buttonBounds.y &&
-      mouseY < buttonBounds.y + buttonBounds.height
-    ) {
-      canvas.style.cursor = "pointer";
-    } else {
-      canvas.style.cursor = "default";
-    }
   }
 });
 
