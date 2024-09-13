@@ -119,6 +119,27 @@ function drawScoreAndLevel() {
   ctx.fillText(`Level: ${level}`, canvas.width - 100, 30);
 }
 
+function showTemporaryMessage(message, duration) {
+  const titleElement = document.querySelector(".game-title");
+  const originalTitle = titleElement.textContent;
+  
+  titleElement.textContent = message;
+  titleElement.classList.add('shake');
+
+  setTimeout(() => {
+    titleElement.textContent = originalTitle;
+  }, duration);
+}
+
+function levelUp() {
+  level++;
+  maxEnemies += level * 10;
+  enemyManager.levelUp(level);
+  
+  showTemporaryMessage(`!HA SUBIDO A NIVEL¡ ${level}`, 5000);
+}
+
+
 // Actualizar juego
 let lastTime = 0;
 function update(time = 0) {
@@ -160,9 +181,7 @@ function update(time = 0) {
   });
 
   if (score >= maxEnemies) {
-    level++;
-    maxEnemies += level * 10;
-    enemyManager.levelUp(level);
+    levelUp(); 
   }
 
   requestAnimationFrame(update);
