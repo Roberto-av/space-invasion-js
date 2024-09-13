@@ -88,7 +88,7 @@ function update(time = 0) {
   player.move(deltaTime);
 
   bullets.forEach((bullet) => {
-    bullet.draw(ctx);
+    bullet.draw(ctx, time);
     bullet.move();
   });
 

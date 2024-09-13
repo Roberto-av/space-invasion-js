@@ -14,6 +14,10 @@ export class Player {
     this.image = new Image();
     this.image.src = "img/nave.png";
     this.keys = {};
+
+    // Inicialización de temporización de disparo
+    this.lastShotTime = 0;
+    this.shootInterval = 500; // Intervalo de disparo en milisegundos
   }
 
   draw(ctx) {
@@ -71,6 +75,29 @@ export class Player {
   }
 
   shoot(bullets) {
-    bullets.push(new Bullet(this.x + this.width / 2 - 2.5, this.y, 5, 10, 7));
+    const currentTime = performance.now();
+
+    // Verificar si ha pasado suficiente tiempo desde el último disparo
+    if (currentTime - this.lastShotTime >= this.shootInterval) {
+      const bulletImages = [
+        "img/bullets/bullet-1-1.png",
+        "img/bullets/bullet-1-2.png",
+        "img/bullets/bullet-1-3.png",
+        "img/bullets/bullet-1-4.png",
+      ];
+
+      bullets.push(
+        new Bullet(
+          this.x + this.width / 2 - 10,
+          this.y,
+          20,
+          40,
+          5,
+          bulletImages
+        )
+      );
+
+      this.lastShotTime = currentTime; // Actualizar el tiempo del último disparo
+    }
   }
 }
