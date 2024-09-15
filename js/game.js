@@ -32,6 +32,8 @@ let isPlaying = false;
 let animationFrameId;
 let speed = 300;
 let gameStarted = false;
+let gameOverState = false;
+let gameFlagStart = true;
 
 // Funciones principales
 function initGame() {
@@ -62,7 +64,6 @@ function initGame() {
   maxEnemies = 10;
 
   initStars();
-  startButton.disabled = true;
 }
 
 function update(time = 0) {
@@ -105,6 +106,8 @@ function update(time = 0) {
 }
 
 function resetGame() {
+  if (!gameOverState) return;
+
   cancelAnimationFrame(animationFrameId);
 
   initGame();
@@ -114,11 +117,10 @@ function resetGame() {
   update();
 
   restartButton.disabled = true;
-  restartButton.removeEventListener("click", resetGame);
   const restartText = document.getElementById("restartText");
   restartText.textContent = "";
-  startButton.disabled = false;
-  gameStarted = false; 
+  gameOverState = false;
+  gameStarted = false;
 }
 
 function initStars() {
@@ -199,6 +201,7 @@ function checkCollision() {
 
 function gameOver() {
   isPlaying = false;
+  gameOverState = true; 
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
   soundManager.stopBackgroundMusic();
@@ -209,13 +212,13 @@ function gameOver() {
   ctx.textAlign = "center";
   ctx.fillText("GAME OVER", canvas.width / 2, canvas.height / 2);
 
+  gameFlagStart = false;
   const restartText = document.getElementById("restartText");
   restartText.textContent = "Reiniciar";
   restartText.style.visibility = "visible";
 
   restartButton.disabled = false;
   restartButton.addEventListener("click", resetGame);
-  startButton.disabled = true;
 }
 
 function drawScoreAndLevel() {
@@ -248,19 +251,26 @@ function showTemporaryMessage(message, duration) {
 }
 
 startButton.addEventListener("click", () => {
-  if (!isPlaying && !gameStarted) {
-    gameStarted = true;
-    startButton.disabled = true;
-    isPlaying = true;
-    enemyManager.init();
-    soundManager.backgroundMusic.play();
-    update();
+  if (gameFlagStart == true) {
+    if (!isPlaying && !gameStarted) {
+      gameStarted = true;
+      startButton.disabled = true;
+      isPlaying = true;
+      enemyManager.init();
+      soundManager.backgroundMusic.play();
+      update();
+    }
+  }else {
+    soundManager.stopGameOverSound();
+    resetGame();
   }
 });
 
 restartButton.addEventListener("click", () => {
-  soundManager.stopGameOverSound();
-  resetGame();
+  if (gameOverState) {
+    soundManager.stopGameOverSound();
+    resetGame();
+  }
 });
 
 document.addEventListener("keydown", (e) => {
@@ -271,6 +281,5 @@ document.addEventListener("keyup", (e) => {
   if (isPlaying) player.handleKeyUp(e);
 });
 
-// Inicialización del juego
 initGame();
 update();
