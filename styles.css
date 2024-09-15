@@ -118,11 +118,21 @@ body {
 }
 
 @keyframes shake {
-  0% { transform: translateX(0); }
-  25% { transform: translateX(-10px); }
-  50% { transform: translateX(10px); }
-  75% { transform: translateX(-10px); }
-  100% { transform: translateX(0); }
+  0% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-10px);
+  }
+  50% {
+    transform: translateX(10px);
+  }
+  75% {
+    transform: translateX(-10px);
+  }
+  100% {
+    transform: translateX(0);
+  }
 }
 
 .controls-panel {
@@ -213,6 +223,39 @@ body {
   cursor: pointer;
   box-shadow: 0 5px 0 rgba(0, 0, 0, 0.5), inset 0 -2px 5px rgba(0, 0, 0, 0.5);
   transition: all 0.1s;
+  position: relative;
+}
+
+.arcade-button .button-text {
+  color: white;
+  font-family: "Press Start 2P", cursive;
+  font-size: 12px;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+}
+
+#buttonContainer {
+  position: relative;
+  display: inline-block;
+}
+
+.button-text {
+  position: absolute;
+  top: -30px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: white;
+  font-family: "Press Start 2P", cursive;
+  font-size: 12px;
+  text-align: center;
+  visibility: hidden;
+}
+
+.arcade-button.red {
+  background: radial-gradient(circle, #ff0000, #8b0000);
 }
 
 .arcade-button:active {

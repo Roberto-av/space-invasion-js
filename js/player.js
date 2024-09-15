@@ -23,13 +23,10 @@ export class Player {
     this.image = new Image();
     this.image.src = "img/nave.png";
     this.keys = {};
-
-    // Inicialización de temporización de disparo
     this.lastShotTime = 0;
-    this.shootInterval = 500; // Intervalo de disparo en milisegundos
-
-    // Sonido de disparo
+    this.shootInterval = 800;
     this.shootSound = shootSound;
+    this.lives = 3;
   }
 
   draw(ctx) {
@@ -44,6 +41,14 @@ export class Player {
       this.width,
       this.height
     );
+  }
+
+  loseLife() {
+    this.lives--;
+  }
+
+  isAlive() {
+    return this.lives > 0;
   }
 
   handleKeyDown(e, bullets) {
