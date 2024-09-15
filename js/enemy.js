@@ -7,7 +7,10 @@ export class Enemy {
     speed,
     imageSrcs,
     canvasWidth,
-    canvasHeight
+    canvasHeight,
+    type = 1,
+    health = 1,
+    canShoot = false 
   ) {
     this.x = x;
     this.y = y;
@@ -21,16 +24,22 @@ export class Enemy {
       img.src = src;
       return img;
     });
-
-    // Inicialización de variables para animación y dirección
+    this.type = type;
+    this.health = health;
+    this.canShoot = canShoot;
     this.imageIndex = 0;
-    this.directionX = Math.random() < 0.5 ? -1 : 1; // Dirección inicial (izquierda o derecha)
+    this.directionX = Math.random() < 0.5 ? -1 : 1;
     this.animationInterval = 400;
     this.lastFrameTime = 0;
-
-    // Temporizador para cambiar la dirección
     this.directionChangeInterval = Math.random() * 1000 + 2000;
     this.lastDirectionChangeTime = performance.now();
+    this.lastShootTime = 0;
+    this.shootCooldown = 2000;
+  }
+
+  takeDamage() {
+    this.health--;
+    return this.health <= 0;
   }
 
   move(currentTime) {
@@ -39,8 +48,8 @@ export class Enemy {
       currentTime - this.lastDirectionChangeTime >=
       this.directionChangeInterval
     ) {
-      this.directionX = Math.random() < 0.5 ? -1 : 1; // Cambiar dirección aleatoriamente
-      this.lastDirectionChangeTime = currentTime; // Resetear el temporizador
+      this.directionX = Math.random() < 0.5 ? -1 : 1;
+      this.lastDirectionChangeTime = currentTime;
       this.directionChangeInterval = Math.random() * 1000 + 2000;
     }
 
@@ -50,10 +59,20 @@ export class Enemy {
     // Movimiento horizontal
     this.x += this.directionX * (this.speed * 0.5);
 
-    // Si el enemigo toca los bordes del canvas, cambiar dirección
+    // Cambiar dirección si toca los bordes
     if (this.x <= 0 || this.x + this.width >= this.canvasWidth) {
-      this.directionX *= -1; // Invertir dirección si toca los bordes
+      this.directionX *= -1;
     }
+
+    // Manejar disparos del enemigo si puede disparar
+    if (this.canShoot && currentTime - this.lastShootTime > this.shootCooldown) {
+      this.shoot();
+      this.lastShootTime = currentTime;
+    }
+  }
+
+  shoot() {
+    console.log("Enemy disparando balas");
   }
 
   draw(ctx, currentTime) {
@@ -61,8 +80,6 @@ export class Enemy {
       this.imageIndex = (this.imageIndex + 1) % this.images.length;
       this.lastFrameTime = currentTime;
     }
-
-    // Dibujar al enemigo
     ctx.drawImage(
       this.images[this.imageIndex],
       this.x,

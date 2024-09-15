@@ -31,6 +31,9 @@ export class Player {
     this.maxBullets = 1;
     this.bulletPositions = [{ x: this.x + this.width / 2 - 10, y: this.y }];
     this.canShootSideways = false;
+    this.level = 1;
+    this.enemiesDefeated = 0;
+    this.enemiesToLevelUp = 10;
   }
 
   draw(ctx) {
@@ -218,6 +221,12 @@ export class Player {
       this.lastShotTime = currentTime;
       this.playShootSound();
     }
+  }
+
+  levelUp() {
+    this.level++;
+    this.enemiesDefeated = 0;
+    this.enemiesToLevelUp += 5; // Incrementar la dificultad
   }
 
   playShootSound() {

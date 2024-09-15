@@ -28,14 +28,17 @@ let explosions = [];
 let stars = [];
 let score = 0;
 let level = 1;
-let maxEnemies = 1;
+let enemigosBase = 10;
+let maxEnemigos = 10;
+let contEnemigos = 0;
 let isPlaying = false;
 let animationFrameId;
 let speed = 300;
 let gameStarted = false;
 let gameOverState = false;
 let gameFlagStart = true;
-let mejoras
+let mejoras;
+let startTime = Date.now();
 
 // Funciones principales
 function initGame() {
@@ -65,7 +68,7 @@ function initGame() {
   stars = [];
   score = 0;
   level = 1;
-  maxEnemies = 1;
+  maxEnemigos = 10;
 
   initStars();
 }
@@ -102,7 +105,7 @@ function update(time = 0) {
     }
   });
 
-  if (score >= maxEnemies) {
+  if (contEnemigos >= maxEnemigos) {
     levelUp();
   }
 
@@ -182,6 +185,7 @@ function checkCollision() {
 
         soundManager.playExplosionSound();
         score++;
+        contEnemigos++;
       }
     });
   });
@@ -228,9 +232,19 @@ function gameOver() {
 function drawScoreAndLevel() {
   ctx.fillStyle = "white";
   ctx.font = "20px Arial";
-  ctx.fillText(`Score: ${score}`, 60, 30);
+
+  const currentTime = Date.now();
+  const elapsedTime = Math.floor((currentTime - startTime) / 1000);
+  const minutes = Math.floor(elapsedTime / 60);
+  const seconds = elapsedTime % 60;
+  
+  const formattedTime = `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+
+  ctx.fillText(`Score: ${score}`, 40, 30);
+  ctx.fillText(`restantes: ${contEnemigos} / ${maxEnemigos}`, 140, 30);
   ctx.fillText(`Level: ${level}`, canvas.width - 100, 30);
   ctx.fillText(`Lives: ${player.lives}`, canvas.width / 2 - 50, 30);
+  ctx.fillText(`Time: ${formattedTime}`, canvas.width - 100, 60);
 }
 
 function resetKeys() {
@@ -239,8 +253,10 @@ function resetKeys() {
 
 function levelUp() {
   level++;
-  maxEnemies += level * 3;
-  enemyManager.levelUp(level);
+  contEnemigos=0;
+  let incrementoAleatorio = Math.floor(Math.random() * (10 - 5 + 1)) + 5;
+  maxEnemigos = maxEnemigos + incrementoAleatorio;
+  player.levelUp();
 
   const mejorasDisponibles = mejoras.obtenerMejorasAleatorias();
   const opciones = mejorasDisponibles.map((mejora, index) => `${index + 1}. ${mejora.name}`).join("\n");
@@ -276,7 +292,7 @@ startButton.addEventListener("click", () => {
       gameStarted = true;
       startButton.disabled = true;
       isPlaying = true;
-      enemyManager.init();
+      enemyManager.init(level);
       soundManager.backgroundMusic.play();
       update();
     }

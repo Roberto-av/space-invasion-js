@@ -1,3 +1,5 @@
+// En el archivo de EnemyManager.js
+
 import { Enemy } from "./enemy.js";
 
 export class EnemyManager {
@@ -11,82 +13,98 @@ export class EnemyManager {
     this.maxActiveEnemies = 3;
     this.spawnRate = 1000;
     this.totalEnemies = 0;
+    this.timeElapsed = 0;
+    this.bossSpawnTime = 120000; // 2 minutos
+    this.bossSpawned = false;
     this.imageSrcs = [
       "img/enemigos/1/enemigo-1-r.png",
       "img/enemigos/1/enemigo-1-m.png",
     ];
-    this.init();
+
+
   }
 
-  init() {
+  init(playerLevel) {
     setInterval(() => {
-      if (
-        this.enemies.length < this.maxActiveEnemies &&
-        this.totalEnemies < this.level * 30
-      ) {
-        this.createEnemy();
+      this.timeElapsed += this.spawnRate;
+
+      if (this.timeElapsed >= this.bossSpawnTime && !this.bossSpawned) {
+        this.createBoss();
+        this.bossSpawned = true;
+      } else if (this.enemies.length < this.maxActiveEnemies + playerLevel) {
+        const chance = Math.random();
+        if (chance > 0.8) {
+          this.createEnemy(2); // Enemigo fuerte
+        } else {
+          this.createEnemy(1); // Enemigo básico
+        }
       }
     }, this.spawnRate);
   }
 
-  createEnemy() {
+  createEnemy(type) {
     const x = Math.random() * (this.canvasWidth - this.width);
+    let health = 1;
+    let canShoot = false;
+    let speed = 1 + this.level * 0.5;
+
+    if (type === 2) {
+      // Enemigo fuerte
+      health = 2;
+      canShoot = true;
+      speed = 2;
+    }
+
     const enemy = new Enemy(
       x,
       0,
       this.width,
       this.height,
-      1 + this.level * 0.5,
+      speed,
       this.imageSrcs,
       this.canvasWidth,
-      this.canvasHeight
+      this.canvasHeight,
+      type,
+      health,
+      canShoot
     );
     this.enemies.push(enemy);
-    this.totalEnemies++;
+  }
+
+  createBoss() {
+    const x = Math.random() * (this.canvasWidth - this.width);
+    const bossImageSrcs = [
+      "img/enemigos/mini-boss/enemigo-mini-jefe-1-r.png",
+      "img/enemigos/mini-boss/enemigo-mini-jefe-1-m.png",
+    ];
+
+    const boss = new Enemy(
+      x,
+      0,
+      this.width * 2, // El mini-jefe será más grande
+      this.height * 2,
+      1,
+      bossImageSrcs,
+      this.canvasWidth,
+      this.canvasHeight,
+      3, // Tipo 3 para el mini-jefe
+      20, // 20 disparos para destruirlo
+      true // Puede disparar varias balas
+    );
+    this.enemies.push(boss);
   }
 
   updateEnemies(ctx) {
-    const currentTime = Date.now(); // Obtener el tiempo actual para animación
+    const currentTime = Date.now();
     this.enemies.forEach((enemy, index) => {
-      enemy.move();
+      enemy.move(currentTime);
       enemy.draw(ctx, currentTime);
-
-      if (enemy.y > this.canvasHeight) {
+  
+      if (enemy.y > this.canvasHeight || enemy.health <= 0) {
         this.enemies.splice(index, 1);
+        this.totalEnemies++;
+  
       }
     });
-  }
-
-  levelUp(newLevel) {
-    this.level = newLevel;
-    this.maxActiveEnemies = 3 + newLevel;
-    this.totalEnemies = 0;
-
-    // Cambiar las imágenes de los enemigos según el nivel
-    switch (this.level) {
-      case 1:
-        this.imageSrcs = [
-          "img/enemigos/1/enemigo-1-r.png",
-          "img/enemigos/1/enemigo-1-m.png",
-        ];
-        break;
-      case 2:
-        this.imageSrcs = [
-          "img/enemigos/2/enemigo-2-r-m.png",
-          "img/enemigos/2/enemigo-2-m-r.png",
-        ];
-        break;
-      case 3:
-        this.imageSrcs = [
-          "img/enemigos/mini-boss/enemigo-mini-jefe-1-r.png",
-          "img/enemigos/mini-boss/enemigo-mini-jefe-1-m.png",
-        ];
-        break;
-      default:
-        this.imageSrcs = [
-          "img/enemigos/mini-boss/enemigo-mini-jefe-1-r.png",
-          "img/enemigos/mini-boss/enemigo-mini-jefe-1-m.png",
-        ];
-    }
   }
 }
