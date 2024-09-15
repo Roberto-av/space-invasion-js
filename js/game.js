@@ -3,6 +3,7 @@ import { EnemyManager } from "./enemyManager.js";
 import { Explosion } from "./explosion.js";
 import { Star } from "./star.js";
 import { SoundManager } from "./soundManager.js";
+import { Mejoras } from "./mejoras.js";
 
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
@@ -27,13 +28,14 @@ let explosions = [];
 let stars = [];
 let score = 0;
 let level = 1;
-let maxEnemies = 10;
+let maxEnemies = 1;
 let isPlaying = false;
 let animationFrameId;
 let speed = 300;
 let gameStarted = false;
 let gameOverState = false;
 let gameFlagStart = true;
+let mejoras
 
 // Funciones principales
 function initGame() {
@@ -48,6 +50,8 @@ function initGame() {
     soundManager.shootSound
   );
 
+  mejoras = new Mejoras(player);
+
   enemyManager = new EnemyManager(
     canvas.width,
     canvas.height,
@@ -61,7 +65,7 @@ function initGame() {
   stars = [];
   score = 0;
   level = 1;
-  maxEnemies = 10;
+  maxEnemies = 1;
 
   initStars();
 }
@@ -229,12 +233,28 @@ function drawScoreAndLevel() {
   ctx.fillText(`Lives: ${player.lives}`, canvas.width / 2 - 50, 30);
 }
 
+function resetKeys() {
+  player.keys = {};
+}
+
 function levelUp() {
   level++;
-  maxEnemies += level * 10;
+  maxEnemies += level * 3;
   enemyManager.levelUp(level);
 
-  showTemporaryMessage(`!HA SUBIDO A NIVEL¡ ${level}`, 5000);
+  const mejorasDisponibles = mejoras.obtenerMejorasAleatorias();
+  const opciones = mejorasDisponibles.map((mejora, index) => `${index + 1}. ${mejora.name}`).join("\n");
+  const choice = prompt(`¡Elige una mejora! \n${opciones}`);
+
+  const seleccionada = parseInt(choice) - 1;
+
+  if (mejorasDisponibles[seleccionada]) {
+    mejorasDisponibles[seleccionada]();
+  }
+
+  resetKeys();
+
+  showTemporaryMessage(`¡HA SUBIDO A NIVEL ${level}!`, 4000);
 }
 
 function showTemporaryMessage(message, duration) {

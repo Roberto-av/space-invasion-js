@@ -1,10 +1,11 @@
 export class Bullet {
-  constructor(x, y, width, height, speed, imageSrcs) {
+  constructor(x, y, width, height, speed, imageSrcs, direction = 0) {
     this.x = x;
     this.y = y;
     this.width = width;
     this.height = height;
     this.speed = speed;
+    this.direction = direction; // 0 para vertical, -1 para izquierda, 1 para derecha
 
     // Cargar las imágenes
     this.images = imageSrcs.map((src) => {
@@ -13,9 +14,9 @@ export class Bullet {
       return img;
     });
 
-    this.imageIndex = 0; // Índice de la imagen actual
-    this.animationInterval = 100; // Intervalo para cambiar la imagen (100 ms)
-    this.lastFrameTime = 0; // Tiempo de la última actualización
+    this.imageIndex = 0;
+    this.animationInterval = 100;
+    this.lastFrameTime = 0;
   }
 
   draw(ctx, currentTime) {
@@ -36,6 +37,10 @@ export class Bullet {
   }
 
   move() {
-    this.y -= this.speed;
+    if (this.direction === 0) {
+      this.y -= this.speed;
+    } else {
+      this.x += this.direction * this.speed;
+    }
   }
 }

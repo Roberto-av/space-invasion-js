@@ -11,7 +11,10 @@ export class EnemyManager {
     this.maxActiveEnemies = 3;
     this.spawnRate = 1000;
     this.totalEnemies = 0;
-    this.imageSrcs = ["img/enemigos/1/enemigo-1-r.png", "img/enemigos/1/enemigo-1-m.png"];
+    this.imageSrcs = [
+      "img/enemigos/1/enemigo-1-r.png",
+      "img/enemigos/1/enemigo-1-m.png",
+    ];
     this.init();
   }
 
@@ -64,13 +67,13 @@ export class EnemyManager {
       case 1:
         this.imageSrcs = [
           "img/enemigos/1/enemigo-1-r.png",
-          "img/enemigos/1/enemigo-1-m.png"
+          "img/enemigos/1/enemigo-1-m.png",
         ];
         break;
       case 2:
         this.imageSrcs = [
-          "img/enemigos/2/enemigo-2-r-m.png", 
-          "img/enemigos/2/enemigo-2-m-r.png"
+          "img/enemigos/2/enemigo-2-r-m.png",
+          "img/enemigos/2/enemigo-2-m-r.png",
         ];
         break;
       case 3:
