@@ -17,7 +17,7 @@ const playerWidth = 48;
 const playerHeight = 48;
 const enemyWidth = 48;
 const enemyHeight = 48;
-
+const menuFontSize = 24;
 const soundManager = new SoundManager();
 
 let player;
@@ -42,7 +42,8 @@ let startTime = Date.now();
 let showUpgradeMenu = false;
 let selectedOptionIndex = 0;
 let availableUpgrades = [];
-const menuFontSize = 24;
+let isPaused = false;
+let pauseMenuFontSize = 50;
 
 // Funciones principales
 function initGame() {
@@ -99,6 +100,11 @@ function drawControls() {
 
 function update(time = 0) {
   if (!player.isAlive()) return;
+
+  if (isPaused) {
+    drawPauseMenu();
+    return;
+  }
 
   const deltaTime = (time - lastTime) / 1000;
   lastTime = time;
@@ -260,6 +266,17 @@ function checkCollision() {
   });
 }
 
+function drawPauseMenu() {
+  ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  ctx.fillStyle = "white";
+  ctx.font = `${pauseMenuFontSize}px Arial`;
+  ctx.textAlign = "center";
+  ctx.fillText("PAUSE", canvas.width / 2, canvas.height / 2);
+}
+
+
 function gameOver() {
   isPlaying = false;
   gameOverState = true;
@@ -370,7 +387,14 @@ restartButton.addEventListener("click", () => {
 });
 
 document.addEventListener("keydown", (e) => {
-  if (showUpgradeMenu) {
+  if (e.key === "Escape") {
+    isPaused = !isPaused;
+    soundManager.stopBackgroundMusic();
+    if (!isPaused) {
+      soundManager.backgroundMusic.play();
+      update();
+    }
+  } else if (showUpgradeMenu) {
     if (e.key === "Enter") {
       if (availableUpgrades[selectedOptionIndex]) {
         availableUpgrades[selectedOptionIndex].action();
@@ -392,6 +416,7 @@ document.addEventListener("keydown", (e) => {
     player.handleKeyDown(e, bullets);
   }
 });
+
 document.addEventListener("keyup", (e) => {
   if (isPlaying) player.handleKeyUp(e);
 });
