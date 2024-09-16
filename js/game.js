@@ -348,7 +348,6 @@ function levelUp() {
 }
 
 startButton.addEventListener("click", () => {
-  document.getElementById("startText").style.display = "none";
   if (gameFlagStart == true) {
     if (!isPlaying && !gameStarted) {
       gameStarted = true;
