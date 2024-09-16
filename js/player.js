@@ -28,6 +28,7 @@ export class Player {
     this.shootSound = shootSound;
     this.lives = 3;
     this.maxLives = 3;
+    this.invulnerabilityDuration = 2000;
     this.maxBullets = 1;
     this.bulletPositions = [{ x: this.x + this.width / 2 - 10, y: this.y }];
     this.canShootSideways = false;
@@ -51,7 +52,18 @@ export class Player {
   }
 
   loseLife() {
+    const currentTime = Date.now();
+    if (this.invulnerable) return; // Si es invulnerable, no pierde vida
     this.lives--;
+    this.invulnerable = true; // Se vuelve invulnerable
+    this.lastHitTime = currentTime; // Guardar el tiempo en que fue golpeado
+  }
+
+  updateInvulnerability() {
+    const currentTime = Date.now();
+    if (this.invulnerable && currentTime - this.lastHitTime > this.invulnerabilityDuration) {
+      this.invulnerable = false; // Si ya pasó el tiempo de invulnerabilidad, se desactiva
+    }
   }
 
   gainLife() {
@@ -108,6 +120,8 @@ export class Player {
     if (this.y < 0) this.y = 0;
     if (this.y + this.height > this.canvasHeight)
       this.y = this.canvasHeight - this.height;
+
+    this.updateInvulnerability();
   }
 
   updateBulletPositions() {

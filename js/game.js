@@ -104,6 +104,7 @@ function update(time = 0) {
     bullet.move();
   });
 
+  console.log("Vidas: ", player.lives);
   enemyManager.updateEnemies(ctx, bulletsEnemies);
   checkCollision();
   drawScoreAndLevel();
@@ -166,13 +167,10 @@ function checkCollision() {
         bullet.y < enemy.y + enemy.height &&
         bullet.height + bullet.y > enemy.y
       ) {
-        // Eliminar la bala
         bullets.splice(bulletIndex, 1);
         soundManager.playExplosionSound();
 
-        // Reducir la vida del enemigo
         if (enemy.takeDamage()) {
-          // Si el enemigo ya no tiene vida, eliminarlo y generar explosión
           enemyManager.enemies.splice(enemyIndex, 1);
 
           const explosionImages = [
@@ -222,14 +220,13 @@ function checkCollision() {
     }
   });
 
-  enemyManager.enemies.forEach((enemy, enemyIndex) => {
+  enemyManager.enemies.forEach((enemy) => {
     if (
       player.x < enemy.x + enemy.width &&
       player.x + player.width > enemy.x &&
       player.y < enemy.y + enemy.height &&
       player.height + player.y > enemy.y
     ) {
-      enemyManager.enemies.splice(enemyIndex, 1);
       player.loseLife();
       soundManager.playLifeLostSound();
       if (!player.isAlive()) {

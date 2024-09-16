@@ -44,6 +44,18 @@ export class Enemy {
       this.moveStartTime = performance.now();
       this.horizontalMoveDuration = Math.random() * 2000 + 3000;
       this.verticalMoveSpeed = 1;
+    } else if (this.type === 3) {
+      // Boss específico
+      this.moveState = "initial";
+      this.moveStartTime = performance.now();
+      this.horizontalMoveDuration = Math.random() * 2000 + 3000;
+      this.verticalMoveSpeed = 1;
+      this.angle = 0;
+      this.angularSpeed = 0.05;
+      this.bossShootCooldown = 1000;
+      this.maxTimeInInitialState = 3000;
+      this.bulletPositions = [];
+      this.maxBullets = 6;
     }
   }
 
@@ -54,8 +66,7 @@ export class Enemy {
 
   move(currentTime, bullets) {
     if (this.type === 1) {
-      // Comportamiento para tipo 1
-      // Verificar si ha pasado suficiente tiempo para cambiar de dirección
+      // Movimiento para enemigos tipo 1
       if (
         currentTime - this.lastDirectionChangeTime >=
         this.directionChangeInterval
@@ -64,68 +75,102 @@ export class Enemy {
         this.lastDirectionChangeTime = currentTime;
         this.directionChangeInterval = Math.random() * 1000 + 2000;
       }
-
-      // Movimiento del enemigo hacia abajo
       this.y += this.speed;
-
-      // Movimiento horizontal
       this.x += this.directionX * (this.speed * 0.5);
-
-      // Cambiar dirección si toca los bordes
       if (this.x <= 0 || this.x + this.width >= this.canvasWidth) {
         this.directionX *= -1;
       }
     } else if (this.type === 2) {
-      // Comportamiento para tipo 2
+      // Movimiento para enemigos tipo 2
       if (this.moveState === "initial") {
-        // Movimiento inicial hacia abajo
         this.y += this.verticalMoveSpeed;
-
-        // Cambiar a movimiento horizontal después de un tiempo
         if (currentTime - this.moveStartTime >= this.horizontalMoveDuration) {
           this.moveState = "movingHorizontal";
           this.moveStartTime = currentTime;
           this.horizontalMoveDuration = Math.random() * 2000 + 3000;
         }
       } else if (this.moveState === "movingHorizontal") {
-        // Movimiento horizontal
         this.x += this.directionX * (this.speed * 0.5);
-
-        // Cambiar dirección horizontal si toca los bordes
         if (this.x <= 0 || this.x + this.width >= this.canvasWidth) {
           this.directionX *= -1;
         }
-
-        // Cambiar a movimiento vertical después de un tiempo
         if (currentTime - this.moveStartTime >= this.horizontalMoveDuration) {
           this.moveState = "movingDown";
           this.moveStartTime = currentTime;
-          this.verticalMoveSpeed = Math.random() * 2 + 1; 
+          this.verticalMoveSpeed = Math.random() * 2 + 1;
         }
       } else if (this.moveState === "movingDown") {
-        // Movimiento vertical hacia abajo
         this.y += this.verticalMoveSpeed;
-
-        // Cambiar a movimiento horizontal nuevamente después de un tiempo
         if (currentTime - this.moveStartTime >= this.horizontalMoveDuration) {
           this.moveState = "movingHorizontal";
           this.moveStartTime = currentTime;
           this.horizontalMoveDuration = Math.random() * 2000 + 3000;
-          this.directionX = Math.random() < 0.5 ? -1 : 1; 
+          this.directionX = Math.random() < 0.5 ? -1 : 1;
+        }
+      }
+    } else if (this.type === 3) {
+      // Movimiento para el boss
+      if (this.moveState === "initial") {
+        this.y += this.verticalMoveSpeed;
+        if (currentTime - this.moveStartTime >= this.maxTimeInInitialState) {
+          this.moveState = "circling";
+          this.moveStartTime = currentTime;
+        }
+      } else if (this.moveState === "circling") {
+        this.x += Math.cos(this.angle) * this.speed;
+        this.y += Math.sin(this.angle) * this.speed;
+        this.angle += this.angularSpeed;
+
+        // Verifica si se encuentra en los límites horizontales
+        if (this.x < 0 || this.x + this.width > this.canvasWidth) {
+          this.x = Math.max(0, Math.min(this.x, this.canvasWidth - this.width));
+          this.angle = -this.angle;
+        }
+
+        // Verifica si se encuentra en los límites verticales
+        if (this.y < 0 || this.y + this.height > this.canvasHeight) {
+          this.y = Math.max(
+            0,
+            Math.min(this.y, this.canvasHeight - this.height)
+          );
+          this.angle = Math.PI - this.angle;
+        }
+
+        // Asegurar que el jefe no pase demasiado tiempo debajo de la mitad del canvas
+        if (this.y > this.canvasHeight / 2) {
+          // Si el jefe está mucho tiempo debajo de la mitad, ajusta su ángulo para subirlo
+          if (currentTime - this.lastAboveHalfTime > this.forceMoveUpCooldown) {
+            this.angle = -Math.abs(this.angle);
+            this.lastAboveHalfTime = currentTime;
+          }
+        } else {
+          // Actualiza el tiempo cuando está sobre la mitad del canvas
+          this.lastAboveHalfTime = currentTime;
         }
       }
     }
 
     // Verificar si el enemigo se sale del canvas
     if (this.y > this.canvasHeight) {
-      this.y = -this.height; 
+      this.y = -this.height;
     }
 
+    // Disparo de balas
     if (
       this.canShoot &&
       currentTime - this.lastShootTime > this.shootCooldown
     ) {
       this.shoot(bullets);
+      this.lastShootTime = currentTime;
+    }
+
+    // Disparo especial del boss
+    if (
+      this.type === 3 &&
+      currentTime - this.lastShootTime > this.bossShootCooldown
+    ) {
+      this.updateBulletPositions();
+      this.shootSpecial(bullets);
       this.lastShootTime = currentTime;
     }
   }
@@ -149,6 +194,87 @@ export class Enemy {
         2
       )
     );
+  }
+
+  updateBulletPositions() {
+    this.bulletPositions = [
+      { x: this.x + this.width / 2 - 10, y: this.y }, // Arriba
+      { x: this.x + this.width / 2 - 10, y: this.y + this.height }, // Abajo
+      { x: this.x, y: this.y + this.height / 2 - 10 }, // Izquierda
+      { x: this.x, y: this.y + this.height / 2 - 40 }, // Izquierda arriba
+      { x: this.x + this.width, y: this.y + this.height / 2 - 10 }, // Derecha
+    ];
+  }
+
+  shootSpecial(bullets) {
+    const bulletImagesUp = [
+      "img/bullets/vertical/boss/bullet-n-1-1.png",
+      "img/bullets/vertical/boss/bullet-n-1-2.png",
+      "img/bullets/vertical/boss/bullet-n-1-3.png",
+      "img/bullets/vertical/boss/bullet-n-1-4.png",
+    ];
+
+    const bulletImagesDown = [
+      "img/bullets/abajo/bullet-n-1-1.png",
+      "img/bullets/abajo/bullet-n-1-2.png",
+      "img/bullets/abajo/bullet-n-1-3.png",
+      "img/bullets/abajo/bullet-n-1-4.png",
+    ];
+
+    const bulletImagesLeft = [
+      "img/bullets/horizontal/izquierda/boss/bullet-n-1-1.png",
+      "img/bullets/horizontal/izquierda/boss/bullet-n-1-2.png",
+      "img/bullets/horizontal/izquierda/boss/bullet-n-1-3.png",
+      "img/bullets/horizontal/izquierda/boss/bullet-n-1-4.png",
+    ];
+
+    const bulletImagesRight = [
+      "img/bullets/horizontal/derecha/boss/bullet-n-1-1.png",
+      "img/bullets/horizontal/derecha/boss/bullet-n-1-2.png",
+      "img/bullets/horizontal/derecha/boss/bullet-n-1-3.png",
+      "img/bullets/horizontal/derecha/boss/bullet-n-1-4.png",
+    ];
+
+    this.bulletPositions.forEach((pos) => {
+      let direction = 0;
+      let currentBulletImages = bulletImagesUp;
+      let bulletWidth = 20;
+      let bulletHeight = 40;
+
+      // Disparo hacia la izquierda
+      if (pos.x === this.x) {
+        direction = -1;
+        currentBulletImages = bulletImagesLeft;
+        bulletWidth = 40;
+        bulletHeight = 20;
+      }
+      // Disparo hacia la derecha
+      else if (pos.x === this.x + this.width) {
+        direction = 1;
+        currentBulletImages = bulletImagesRight;
+        bulletWidth = 40;
+        bulletHeight = 20;
+      }
+      // Disparo hacia abajo
+      else if (pos.y === this.y + this.height) {
+        direction = 2;
+        currentBulletImages = bulletImagesDown;
+        bulletWidth = 20;
+        bulletHeight = 40;
+      }
+
+      bullets.push(
+        new Bullet(
+          pos.x,
+          pos.y,
+          bulletWidth,
+          bulletHeight,
+          5,
+          currentBulletImages,
+          direction
+        )
+      );
+    });
   }
 
   draw(ctx, currentTime) {
