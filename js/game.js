@@ -24,6 +24,7 @@ let player;
 let enemyManager;
 let lastTime = 0;
 let bullets = [];
+let bulletsEnemies = [];
 let explosions = [];
 let stars = [];
 let score = 0;
@@ -63,12 +64,16 @@ function initGame() {
     level
   );
 
+  enemyManager.init(level);
   bullets = [];
+  bulletsEnemies = [];
   explosions = [];
   stars = [];
   score = 0;
   level = 1;
   maxEnemigos = 10;
+  contEnemigos = 0;
+  speed = 300;
 
   initStars();
 }
@@ -94,7 +99,12 @@ function update(time = 0) {
     bullet.move();
   });
 
-  enemyManager.updateEnemies(ctx);
+  bulletsEnemies.forEach((bullet) => {
+    bullet.draw(ctx, time);
+    bullet.move();
+  });
+
+  enemyManager.updateEnemies(ctx, bulletsEnemies);
   checkCollision();
   drawScoreAndLevel();
 
@@ -156,38 +166,60 @@ function checkCollision() {
         bullet.y < enemy.y + enemy.height &&
         bullet.height + bullet.y > enemy.y
       ) {
+        // Eliminar la bala
         bullets.splice(bulletIndex, 1);
-        enemyManager.enemies.splice(enemyIndex, 1);
-
-        const explosionImages = [
-          "img/explosion/explosion-1-1.png",
-          "img/explosion/explosion-1-2.png",
-          "img/explosion/explosion-1-3.png",
-          "img/explosion/explosion-1-4.png",
-          "img/explosion/explosion-1-5.png",
-          "img/explosion/explosion-1-6.png",
-          "img/explosion/explosion-1-7.png",
-          "img/explosion/explosion-1-8.png",
-          "img/explosion/explosion-1-9.png",
-          "img/explosion/explosion-1-10.png",
-          "img/explosion/explosion-1-11.png",
-          "img/explosion/explosion-1-12.png",
-        ];
-        explosions.push(
-          new Explosion(
-            enemy.x,
-            enemy.y,
-            enemy.width,
-            enemy.height,
-            explosionImages
-          )
-        );
-
         soundManager.playExplosionSound();
-        score++;
-        contEnemigos++;
+
+        // Reducir la vida del enemigo
+        if (enemy.takeDamage()) {
+          // Si el enemigo ya no tiene vida, eliminarlo y generar explosión
+          enemyManager.enemies.splice(enemyIndex, 1);
+
+          const explosionImages = [
+            "img/explosion/explosion-1-1.png",
+            "img/explosion/explosion-1-2.png",
+            "img/explosion/explosion-1-3.png",
+            "img/explosion/explosion-1-4.png",
+            "img/explosion/explosion-1-5.png",
+            "img/explosion/explosion-1-6.png",
+            "img/explosion/explosion-1-7.png",
+            "img/explosion/explosion-1-8.png",
+            "img/explosion/explosion-1-9.png",
+            "img/explosion/explosion-1-10.png",
+            "img/explosion/explosion-1-11.png",
+            "img/explosion/explosion-1-12.png",
+          ];
+          explosions.push(
+            new Explosion(
+              enemy.x,
+              enemy.y,
+              enemy.width,
+              enemy.height,
+              explosionImages
+            )
+          );
+
+          score++;
+          contEnemigos++;
+        }
       }
     });
+  });
+
+  enemyManager.bullets.forEach((bullet, bulletIndex) => {
+    if (
+      bullet.x < player.x + player.width &&
+      bullet.x + bullet.width > player.x &&
+      bullet.y < player.y + player.height &&
+      bullet.height + bullet.y > player.y
+    ) {
+      enemyManager.bullets.splice(bulletIndex, 1);
+      player.loseLife();
+      soundManager.playLifeLostSound();
+      if (!player.isAlive()) {
+        gameOver();
+      }
+    }
   });
 
   enemyManager.enemies.forEach((enemy, enemyIndex) => {
@@ -207,9 +239,10 @@ function checkCollision() {
   });
 }
 
+
 function gameOver() {
   isPlaying = false;
-  gameOverState = true; 
+  gameOverState = true;
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
   soundManager.stopBackgroundMusic();
@@ -237,8 +270,8 @@ function drawScoreAndLevel() {
   const elapsedTime = Math.floor((currentTime - startTime) / 1000);
   const minutes = Math.floor(elapsedTime / 60);
   const seconds = elapsedTime % 60;
-  
-  const formattedTime = `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+
+  const formattedTime = `${minutes}:${seconds < 10 ? "0" : ""}${seconds}`;
 
   ctx.fillText(`Score: ${score}`, 40, 30);
   ctx.fillText(`restantes: ${contEnemigos} / ${maxEnemigos}`, 140, 30);
@@ -253,13 +286,15 @@ function resetKeys() {
 
 function levelUp() {
   level++;
-  contEnemigos=0;
+  contEnemigos = 0;
   let incrementoAleatorio = Math.floor(Math.random() * (10 - 5 + 1)) + 5;
   maxEnemigos = maxEnemigos + incrementoAleatorio;
   player.levelUp();
 
   const mejorasDisponibles = mejoras.obtenerMejorasAleatorias();
-  const opciones = mejorasDisponibles.map((mejora, index) => `${index + 1}. ${mejora.name}`).join("\n");
+  const opciones = mejorasDisponibles
+    .map((mejora, index) => `${index + 1}. ${mejora.name}`)
+    .join("\n");
   const choice = prompt(`¡Elige una mejora! \n${opciones}`);
 
   const seleccionada = parseInt(choice) - 1;
@@ -292,11 +327,10 @@ startButton.addEventListener("click", () => {
       gameStarted = true;
       startButton.disabled = true;
       isPlaying = true;
-      enemyManager.init(level);
       soundManager.backgroundMusic.play();
       update();
     }
-  }else {
+  } else {
     soundManager.stopGameOverSound();
     resetGame();
   }

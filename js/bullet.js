@@ -5,9 +5,7 @@ export class Bullet {
     this.width = width;
     this.height = height;
     this.speed = speed;
-    this.direction = direction; // 0 para vertical, -1 para izquierda, 1 para derecha
-
-    // Cargar las imágenes
+    this.direction = direction;
     this.images = imageSrcs.map((src) => {
       const img = new Image();
       img.src = src;
@@ -20,13 +18,11 @@ export class Bullet {
   }
 
   draw(ctx, currentTime) {
-    // Actualizar el índice de la imagen si ha pasado el tiempo suficiente
     if (currentTime - this.lastFrameTime > this.animationInterval) {
       this.imageIndex = (this.imageIndex + 1) % this.images.length; // Cambiar de imagen
       this.lastFrameTime = currentTime;
     }
 
-    // Dibujar la imagen actual de la animación
     ctx.drawImage(
       this.images[this.imageIndex],
       this.x,
@@ -38,9 +34,13 @@ export class Bullet {
 
   move() {
     if (this.direction === 0) {
-      this.y -= this.speed;
-    } else {
-      this.x += this.direction * this.speed;
+      this.y -= this.speed; // Movimiento hacia arriba
+    } else if (this.direction === 1) {
+      this.x += this.speed; // Movimiento hacia la derecha
+    } else if (this.direction === -1) {
+      this.x -= this.speed; // Movimiento hacia la izquierda
+    } else if (this.direction === 2) {
+      this.y += this.speed; // Movimiento hacia abajo
     }
   }
 }
