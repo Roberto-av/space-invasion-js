@@ -108,8 +108,8 @@ export class Enemy {
           this.directionX = Math.random() < 0.5 ? -1 : 1;
         }
       }
-    } else if (this.type === 3) {
-      // Movimiento para el boss
+    } else  if (this.type === 3) {
+      // Movimiento para el boss (tipo 3)
       if (this.moveState === "initial") {
         this.y += this.verticalMoveSpeed;
         if (currentTime - this.moveStartTime >= this.maxTimeInInitialState) {
@@ -117,34 +117,31 @@ export class Enemy {
           this.moveStartTime = currentTime;
         }
       } else if (this.moveState === "circling") {
+        // Movimiento circular constante
         this.x += Math.cos(this.angle) * this.speed;
         this.y += Math.sin(this.angle) * this.speed;
         this.angle += this.angularSpeed;
-
-        // Verifica si se encuentra en los límites horizontales
+  
+        // Verificar si el jefe se acerca demasiado a los bordes horizontales
         if (this.x < 0 || this.x + this.width > this.canvasWidth) {
           this.x = Math.max(0, Math.min(this.x, this.canvasWidth - this.width));
-          this.angle = -this.angle;
+          this.angle = -this.angle; // Invertir la dirección horizontal
         }
-
-        // Verifica si se encuentra en los límites verticales
+  
+        // Verificar si el jefe se acerca demasiado a los bordes verticales
         if (this.y < 0 || this.y + this.height > this.canvasHeight) {
-          this.y = Math.max(
-            0,
-            Math.min(this.y, this.canvasHeight - this.height)
-          );
-          this.angle = Math.PI - this.angle;
+          this.y = Math.max(0, Math.min(this.y, this.canvasHeight - this.height));
+          this.angle = Math.PI - this.angle; // Invertir la dirección vertical
         }
-
-        // Asegurar que el jefe no pase demasiado tiempo debajo de la mitad del canvas
+  
+        // Asegurarse de que no pase mucho tiempo debajo de la mitad del canvas
         if (this.y > this.canvasHeight / 2) {
-          // Si el jefe está mucho tiempo debajo de la mitad, ajusta su ángulo para subirlo
           if (currentTime - this.lastAboveHalfTime > this.forceMoveUpCooldown) {
-            this.angle = -Math.abs(this.angle);
+            this.angle = -Math.abs(this.angle); // Forzar movimiento hacia arriba
             this.lastAboveHalfTime = currentTime;
           }
         } else {
-          // Actualiza el tiempo cuando está sobre la mitad del canvas
+          // Actualizar el tiempo si está sobre la mitad del canvas
           this.lastAboveHalfTime = currentTime;
         }
       }

@@ -326,6 +326,7 @@ function drawUpgradeMenu() {
 
 function levelUp() {
   level++;
+  enemyManager.maxActiveEnemies += level + 3;
   contEnemigos = 0;
   showUpgradeMenu = true;
 
