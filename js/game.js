@@ -29,8 +29,7 @@ let explosions = [];
 let stars = [];
 let score = 0;
 let level = 1;
-let enemigosBase = 10;
-let maxEnemigos = 10;
+let maxEnemigos = 1;
 let contEnemigos = 0;
 let isPlaying = false;
 let animationFrameId;
@@ -40,6 +39,10 @@ let gameOverState = false;
 let gameFlagStart = true;
 let mejoras;
 let startTime = Date.now();
+let showUpgradeMenu = false;
+let selectedOptionIndex = 0;
+let availableUpgrades = [];
+const menuFontSize = 24;
 
 // Funciones principales
 function initGame() {
@@ -71,7 +74,7 @@ function initGame() {
   stars = [];
   score = 0;
   level = 1;
-  maxEnemigos = 10;
+  maxEnemigos = 1;
   contEnemigos = 0;
   speed = 300;
 
@@ -85,6 +88,11 @@ function update(time = 0) {
   lastTime = time;
 
   ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  if (showUpgradeMenu) {
+    drawUpgradeMenu();
+    return;
+  }
 
   if (!isPlaying) {
     return;
@@ -236,7 +244,6 @@ function checkCollision() {
   });
 }
 
-
 function gameOver() {
   isPlaying = false;
   gameOverState = true;
@@ -281,29 +288,48 @@ function resetKeys() {
   player.keys = {};
 }
 
+function drawUpgradeMenu() {
+  const menuWidth = 300;
+  const menuHeight = 200;
+  const menuX = canvas.width / 2 - menuWidth / 2;
+  const menuY = canvas.height / 2 - menuHeight / 2;
+
+  ctx.fillStyle = "rgba(0, 0, 0, 0.8)";
+  ctx.fillRect(menuX, menuY, menuWidth, menuHeight);
+
+  ctx.fillStyle = "white";
+  ctx.font = `${menuFontSize}px Arial`;
+  ctx.textAlign = "center";
+  ctx.fillText("Escoge una mejora", canvas.width / 2, menuY + 40);
+
+  availableUpgrades.forEach((upgrade, index) => {
+    ctx.fillStyle = index === selectedOptionIndex ? "yellow" : "white";
+    ctx.fillText(upgrade.name, canvas.width / 2, menuY + 80 + index * 40);
+  });
+}
+
 function levelUp() {
   level++;
   contEnemigos = 0;
+  showUpgradeMenu = true;
+
   let incrementoAleatorio = Math.floor(Math.random() * (10 - 5 + 1)) + 5;
-  maxEnemigos = maxEnemigos + incrementoAleatorio;
+  maxEnemigos += incrementoAleatorio;
   player.levelUp();
 
-  const mejorasDisponibles = mejoras.obtenerMejorasAleatorias();
-  const opciones = mejorasDisponibles
-    .map((mejora, index) => `${index + 1}. ${mejora.name}`)
-    .join("\n");
-  const choice = prompt(`¡Elige una mejora! \n${opciones}`);
+  availableUpgrades = mejoras
+    .obtenerMejorasAleatorias()
+    .map((mejora, index) => ({
+      name: `${index + 1}. ${mejora.texto}`,
+      action: mejora.funcion,
+    }));
 
-  const seleccionada = parseInt(choice) - 1;
-
-  if (mejorasDisponibles[seleccionada]) {
-    mejorasDisponibles[seleccionada]();
-  }
+  showUpgradeMenu = true;
+  isPlaying = false; 
 
   resetKeys();
-
-  showTemporaryMessage(`¡HA SUBIDO A NIVEL ${level}!`, 4000);
 }
+
 
 function showTemporaryMessage(message, duration) {
   const titleElement = document.querySelector(".game-title");
@@ -341,9 +367,28 @@ restartButton.addEventListener("click", () => {
 });
 
 document.addEventListener("keydown", (e) => {
-  if (isPlaying) player.handleKeyDown(e, bullets);
+  if (showUpgradeMenu) {
+    if (e.key === "Enter") {
+      if (availableUpgrades[selectedOptionIndex]) {
+        availableUpgrades[selectedOptionIndex].action();
+        showUpgradeMenu = false;
+        isPlaying = true;
+        update();
+      }
+    } else if (e.key === "w") {
+      selectedOptionIndex =
+        (selectedOptionIndex - 1 + availableUpgrades.length) %
+        availableUpgrades.length;
+      update(); 
+    } else if (e.key === "s") {
+      selectedOptionIndex =
+        (selectedOptionIndex + 1) % availableUpgrades.length;
+      update();
+    }
+  } else if (isPlaying) {
+    player.handleKeyDown(e, bullets);
+  }
 });
-
 document.addEventListener("keyup", (e) => {
   if (isPlaying) player.handleKeyUp(e);
 });

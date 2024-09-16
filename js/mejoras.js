@@ -1,26 +1,52 @@
 export class Mejoras {
   constructor(player) {
     this.player = player;
+    this.maxAumentarNumeroBalas = 2;
+    this.aumentarNumeroBalasCount = 0;
+    this.maxDispararBalasLado = 1;
+    this.dispararBalasLadoCount = 0;
+
     this.opcionesMejoras = [
-      this.vidaExtra.bind(this),
-      this.incrementarVelocidadDisparo.bind(this),
-      this.aumentarNumeroBalas.bind(this),
-      this.aumentarVelocidadNave.bind(this),
-      this.recuperarVidas.bind(this),
-      this.dispararBalasLado.bind(this),
+      { texto: "Vida Extra", funcion: this.vidaExtra.bind(this) },
+      {
+        texto: "Incrementar Velocidad de Disparo",
+        funcion: this.incrementarVelocidadDisparo.bind(this),
+      },
+      {
+        texto: "Aumentar Número de Balas",
+        funcion: this.aumentarNumeroBalas.bind(this),
+      },
+      {
+        texto: "Disparar balas de lado",
+        funcion: this.dispararBalasLado.bind(this),
+      },
+      {
+        texto: "Aumentar velocidad de la nave",
+        funcion: this.aumentarVelocidadNave.bind(this),
+      },
+      {
+        texto: "Recuperar todas las vidas",
+        funcion: this.recuperarVidas.bind(this),
+      },
     ];
   }
 
-  // Seleccionar 3 mejoras aleatorias de la lista
   obtenerMejorasAleatorias() {
     const mejorasAleatorias = [];
 
-    while (mejorasAleatorias.length < 3) {
-      const mejoraIndex = Math.floor(
-        Math.random() * this.opcionesMejoras.length
-      );
+    const opcionesFiltradas = this.opcionesMejoras.filter((opcion) => {
+      if (opcion.texto === "Aumentar Número de Balas") {
+        return this.aumentarNumeroBalasCount < this.maxAumentarNumeroBalas;
+      }
+      if (opcion.texto === "Disparar balas de lado") {
+        return this.dispararBalasLadoCount < this.maxDispararBalasLado;
+      }
+      return true;
+    });
 
-      const mejora = this.opcionesMejoras[mejoraIndex];
+    while (mejorasAleatorias.length < 3) {
+      const mejoraIndex = Math.floor(Math.random() * opcionesFiltradas.length);
+      const mejora = opcionesFiltradas[mejoraIndex];
 
       if (!mejorasAleatorias.includes(mejora)) {
         mejorasAleatorias.push(mejora);
@@ -40,10 +66,12 @@ export class Mejoras {
 
   aumentarNumeroBalas() {
     this.player.aumentarNumeroBalas();
+    this.aumentarNumeroBalasCount++;
   }
 
   dispararBalasLado() {
     this.player.activarDisparoLateral();
+    this.dispararBalasLadoCount++;
   }
 
   enemigosArrojanBalas() {
