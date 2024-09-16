@@ -29,7 +29,7 @@ let explosions = [];
 let stars = [];
 let score = 0;
 let level = 1;
-let maxEnemigos = 1;
+let maxEnemigos = 10;
 let contEnemigos = 0;
 let isPlaying = false;
 let animationFrameId;
@@ -74,11 +74,27 @@ function initGame() {
   stars = [];
   score = 0;
   level = 1;
-  maxEnemigos = 1;
+  maxEnemigos = 10;
   contEnemigos = 0;
   speed = 300;
 
   initStars();
+}
+
+function drawControls() {
+  const controls = [
+    { text: "Controles:", y: 50 },
+    { text: "W, A, S, D: Mover", y: 100 },
+    { text: "Enter: Disparar", y: 150 },
+  ];
+
+  ctx.fillStyle = "white";
+  ctx.font = "20px Arial";
+  ctx.textAlign = "center";
+
+  controls.forEach((control) => {
+    ctx.fillText(control.text, canvas.width / 2, control.y);
+  });
 }
 
 function update(time = 0) {
@@ -95,6 +111,7 @@ function update(time = 0) {
   }
 
   if (!isPlaying) {
+    drawControls();
     return;
   }
 
@@ -112,7 +129,6 @@ function update(time = 0) {
     bullet.move();
   });
 
-  console.log("Vidas: ", player.lives);
   enemyManager.updateEnemies(ctx, bulletsEnemies);
   checkCollision();
   drawScoreAndLevel();
@@ -277,10 +293,10 @@ function drawScoreAndLevel() {
 
   const formattedTime = `${minutes}:${seconds < 10 ? "0" : ""}${seconds}`;
 
-  ctx.fillText(`Score: ${score}`, 40, 30);
-  ctx.fillText(`restantes: ${contEnemigos} / ${maxEnemigos}`, 140, 30);
-  ctx.fillText(`Level: ${level}`, canvas.width - 100, 30);
-  ctx.fillText(`Lives: ${player.lives}`, canvas.width / 2 - 50, 30);
+  ctx.fillText(`Score: ${score}`, 50, 30);
+  ctx.fillText(`restantes: ${contEnemigos} / ${maxEnemigos}`, 85, 60);
+  ctx.fillText(`Nivel: ${level}`, canvas.width - 100, 30);
+  ctx.fillText(`Vidas: ${player.lives} / ${player.maxLives}`, canvas.width / 2 - 50, 30);
   ctx.fillText(`Time: ${formattedTime}`, canvas.width - 100, 60);
 }
 
@@ -325,26 +341,13 @@ function levelUp() {
     }));
 
   showUpgradeMenu = true;
-  isPlaying = false; 
+  isPlaying = false;
 
   resetKeys();
 }
 
-
-function showTemporaryMessage(message, duration) {
-  const titleElement = document.querySelector(".game-title");
-  const originalTitle = titleElement.textContent;
-
-  titleElement.textContent = message;
-  titleElement.classList.add("shake");
-
-  setTimeout(() => {
-    titleElement.textContent = originalTitle;
-    titleElement.classList.remove("shake");
-  }, duration);
-}
-
 startButton.addEventListener("click", () => {
+  document.getElementById("startText").style.display = "none";
   if (gameFlagStart == true) {
     if (!isPlaying && !gameStarted) {
       gameStarted = true;
@@ -379,7 +382,7 @@ document.addEventListener("keydown", (e) => {
       selectedOptionIndex =
         (selectedOptionIndex - 1 + availableUpgrades.length) %
         availableUpgrades.length;
-      update(); 
+      update();
     } else if (e.key === "s") {
       selectedOptionIndex =
         (selectedOptionIndex + 1) % availableUpgrades.length;
