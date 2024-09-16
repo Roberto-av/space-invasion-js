@@ -1,35 +1,48 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Space Invasion</title>
-    <style>
-        body {
-            margin: 0;
-            background-color: black;
-        }
-
-        canvas {
-            display: block;
-            margin: 0 auto;
-            border: 1px solid white;
-        }
-
-        .info {
-            text-align: center;
-            color: white;
-            font-family: Arial, sans-serif;
-        }
-    </style>
-</head>
-<body>
-    <div class="info">
-        <h1>Space Invasion</h1>
-        <p>Use W, A, S, D para moverse y barra espaciadora para disparar</p>
+    <link rel="stylesheet" href="styles.css" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <div class="arcade-machine">
+      <div class="machine-top"></div>
+      <div class="screen-bezel">
+        <div class="screen-container">
+          <canvas id="gameCanvas"></canvas>
+          <div class="crt-effect"></div>
+          <div class="screen-reflection"></div>
+        </div>
+      </div>
+      <div class="machine-middle">
+        <div class="title-area">
+          <h1 id="gameTitle" class="game-title">SPACE INVASION</h1>
+          <div class="green-light"></div>
+        </div>
+      </div>
+      <div class="controls-panel">
+        <div class="joystick-area">
+          <div id="startButton" class="joystick">
+            <div class="joystick-base"></div>
+            <div class="joystick-stick"></div>
+          </div>
+        </div>
+        <div class="buttons-area">
+          <div id="buttonContainer">
+            <span id="restartText" class="button-text"></span> 
+            <button id="restartButton" class="arcade-button red"></button>
+          </div>
+          <button class="arcade-button blue"></button>
+        </div>
+      </div>
+      <div class="machine-bottom"></div>
     </div>
-    <canvas id="gameCanvas"></canvas>
-    
     <script type="module" src="js/game.js"></script>
-</body>
+  </body>
 </html>

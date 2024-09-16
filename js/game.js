@@ -1,38 +1,171 @@
 import { Player } from "./player.js";
 import { EnemyManager } from "./enemyManager.js";
-import { Bullet } from "./bullet.js";
-import { drawStartButton } from './boton.js';
+import { Explosion } from "./explosion.js";
+import { Star } from "./star.js";
+import { SoundManager } from "./soundManager.js";
+import { Mejoras } from "./mejoras.js";
 
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
+const startButton = document.getElementById("startButton");
+const restartButton = document.getElementById("restartButton");
 
 canvas.width = 800;
 canvas.height = 600;
 
-const playerWidth = 64;
-const playerHeight = 64;
-const enemyImgSrc = "img/enemigos-dib.png";
+const playerWidth = 48;
+const playerHeight = 48;
+const enemyWidth = 48;
+const enemyHeight = 48;
 
-let player = new Player(
-  canvas.width / 2 - playerWidth / 2,
-  canvas.height - playerHeight - 10,
-  playerWidth,
-  playerHeight,
-  400,
-  canvas.width,
-  canvas.height
-);
+const soundManager = new SoundManager();
+
+let player;
+let enemyManager;
+let lastTime = 0;
 let bullets = [];
+let bulletsEnemies = [];
+let explosions = [];
+let stars = [];
 let score = 0;
 let level = 1;
-let maxEnemies = 30;
+let maxEnemigos = 1;
+let contEnemigos = 0;
 let isPlaying = false;
+let animationFrameId;
+let speed = 300;
+let gameStarted = false;
+let gameOverState = false;
+let gameFlagStart = true;
+let mejoras;
+let startTime = Date.now();
+let showUpgradeMenu = false;
+let selectedOptionIndex = 0;
+let availableUpgrades = [];
+const menuFontSize = 24;
 
-let enemyManager = new EnemyManager(enemyImgSrc, canvas.width, canvas.height, level);
+// Funciones principales
+function initGame() {
+  player = new Player(
+    canvas.width / 2 - playerWidth / 2,
+    canvas.height - playerHeight - 10,
+    playerWidth,
+    playerHeight,
+    speed,
+    canvas.width,
+    canvas.height,
+    soundManager.shootSound
+  );
 
-let buttonBounds = { x: 0, y: 0, width: 200, height: 60 };
+  mejoras = new Mejoras(player);
 
-// Verificar colisión
+  enemyManager = new EnemyManager(
+    canvas.width,
+    canvas.height,
+    enemyWidth,
+    enemyHeight,
+    level
+  );
+
+  enemyManager.init(level);
+  bullets = [];
+  bulletsEnemies = [];
+  explosions = [];
+  stars = [];
+  score = 0;
+  level = 1;
+  maxEnemigos = 1;
+  contEnemigos = 0;
+  speed = 300;
+
+  initStars();
+}
+
+function update(time = 0) {
+  if (!player.isAlive()) return;
+
+  const deltaTime = (time - lastTime) / 1000;
+  lastTime = time;
+
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  if (showUpgradeMenu) {
+    drawUpgradeMenu();
+    return;
+  }
+
+  if (!isPlaying) {
+    return;
+  }
+
+  updateStars();
+  player.draw(ctx);
+  player.move(deltaTime);
+
+  bullets.forEach((bullet) => {
+    bullet.draw(ctx, time);
+    bullet.move();
+  });
+
+  bulletsEnemies.forEach((bullet) => {
+    bullet.draw(ctx, time);
+    bullet.move();
+  });
+
+  console.log("Vidas: ", player.lives);
+  enemyManager.updateEnemies(ctx, bulletsEnemies);
+  checkCollision();
+  drawScoreAndLevel();
+
+  explosions.forEach((explosion, index) => {
+    explosion.draw(ctx, time);
+    if (explosion.finished) {
+      explosions.splice(index, 1);
+    }
+  });
+
+  if (contEnemigos >= maxEnemigos) {
+    levelUp();
+  }
+
+  animationFrameId = requestAnimationFrame(update);
+}
+
+function resetGame() {
+  if (!gameOverState) return;
+
+  cancelAnimationFrame(animationFrameId);
+
+  initGame();
+  soundManager.stopBackgroundMusic();
+  soundManager.backgroundMusic.play();
+  isPlaying = true;
+  update();
+
+  restartButton.disabled = true;
+  const restartText = document.getElementById("restartText");
+  restartText.textContent = "";
+  gameOverState = false;
+  gameStarted = false;
+}
+
+function initStars() {
+  for (let i = 0; i < 100; i++) {
+    let x = Math.random() * canvas.width;
+    let y = Math.random() * canvas.height;
+    let radius = Math.random() * 2;
+    let speed = Math.random() * 2 + 1;
+    stars.push(new Star(x, y, radius, speed, canvas.height));
+  }
+}
+
+function updateStars() {
+  stars.forEach((star) => {
+    star.update();
+    star.draw(ctx);
+  });
+}
+
 function checkCollision() {
   bullets.forEach((bullet, bulletIndex) => {
     enemyManager.enemies.forEach((enemy, enemyIndex) => {
@@ -43,93 +176,222 @@ function checkCollision() {
         bullet.height + bullet.y > enemy.y
       ) {
         bullets.splice(bulletIndex, 1);
-        enemyManager.enemies.splice(enemyIndex, 1);
-        score++;
+        soundManager.playExplosionSound();
+
+        if (enemy.takeDamage()) {
+          enemyManager.enemies.splice(enemyIndex, 1);
+
+          const explosionImages = [
+            "img/explosion/explosion-1-1.png",
+            "img/explosion/explosion-1-2.png",
+            "img/explosion/explosion-1-3.png",
+            "img/explosion/explosion-1-4.png",
+            "img/explosion/explosion-1-5.png",
+            "img/explosion/explosion-1-6.png",
+            "img/explosion/explosion-1-7.png",
+            "img/explosion/explosion-1-8.png",
+            "img/explosion/explosion-1-9.png",
+            "img/explosion/explosion-1-10.png",
+            "img/explosion/explosion-1-11.png",
+            "img/explosion/explosion-1-12.png",
+          ];
+          explosions.push(
+            new Explosion(
+              enemy.x,
+              enemy.y,
+              enemy.width,
+              enemy.height,
+              explosionImages
+            )
+          );
+
+          score++;
+          contEnemigos++;
+        }
       }
     });
   });
+
+  enemyManager.bullets.forEach((bullet, bulletIndex) => {
+    if (
+      bullet.x < player.x + player.width &&
+      bullet.x + bullet.width > player.x &&
+      bullet.y < player.y + player.height &&
+      bullet.height + bullet.y > player.y
+    ) {
+      enemyManager.bullets.splice(bulletIndex, 1);
+      player.loseLife();
+      soundManager.playLifeLostSound();
+      if (!player.isAlive()) {
+        gameOver();
+      }
+    }
+  });
+
+  enemyManager.enemies.forEach((enemy) => {
+    if (
+      player.x < enemy.x + enemy.width &&
+      player.x + player.width > enemy.x &&
+      player.y < enemy.y + enemy.height &&
+      player.height + player.y > enemy.y
+    ) {
+      player.loseLife();
+      soundManager.playLifeLostSound();
+      if (!player.isAlive()) {
+        gameOver();
+      }
+    }
+  });
+}
+
+function gameOver() {
+  isPlaying = false;
+  gameOverState = true;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  soundManager.stopBackgroundMusic();
+  soundManager.playGameOverSound();
+
+  ctx.fillStyle = "red";
+  ctx.font = "50px Arial";
+  ctx.textAlign = "center";
+  ctx.fillText("GAME OVER", canvas.width / 2, canvas.height / 2);
+
+  gameFlagStart = false;
+  const restartText = document.getElementById("restartText");
+  restartText.textContent = "Reiniciar";
+  restartText.style.visibility = "visible";
+
+  restartButton.disabled = false;
+  restartButton.addEventListener("click", resetGame);
 }
 
 function drawScoreAndLevel() {
   ctx.fillStyle = "white";
   ctx.font = "20px Arial";
-  ctx.fillText(`Score: ${score}`, 60, 30);
+
+  const currentTime = Date.now();
+  const elapsedTime = Math.floor((currentTime - startTime) / 1000);
+  const minutes = Math.floor(elapsedTime / 60);
+  const seconds = elapsedTime % 60;
+
+  const formattedTime = `${minutes}:${seconds < 10 ? "0" : ""}${seconds}`;
+
+  ctx.fillText(`Score: ${score}`, 40, 30);
+  ctx.fillText(`restantes: ${contEnemigos} / ${maxEnemigos}`, 140, 30);
   ctx.fillText(`Level: ${level}`, canvas.width - 100, 30);
+  ctx.fillText(`Lives: ${player.lives}`, canvas.width / 2 - 50, 30);
+  ctx.fillText(`Time: ${formattedTime}`, canvas.width - 100, 60);
 }
 
-// Actualizar juego
-let lastTime = 0;
-function update(time = 0) {
-  const deltaTime = (time - lastTime) / 1000;
-  lastTime = time;
+function resetKeys() {
+  player.keys = {};
+}
 
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
+function drawUpgradeMenu() {
+  const menuWidth = 300;
+  const menuHeight = 200;
+  const menuX = canvas.width / 2 - menuWidth / 2;
+  const menuY = canvas.height / 2 - menuHeight / 2;
 
-  if (!isPlaying) {
-    buttonBounds = {
-      x: canvas.width / 2 - 100,
-      y: canvas.height / 2 - 30,
-      width: 200,
-      height: 60
-    };
-    drawStartButton(ctx, canvas.width, canvas.height);
-    return;
-  }
+  ctx.fillStyle = "rgba(0, 0, 0, 0.8)";
+  ctx.fillRect(menuX, menuY, menuWidth, menuHeight);
 
-  player.draw(ctx);
-  player.move(deltaTime);
+  ctx.fillStyle = "white";
+  ctx.font = `${menuFontSize}px Arial`;
+  ctx.textAlign = "center";
+  ctx.fillText("Escoge una mejora", canvas.width / 2, menuY + 40);
 
-  bullets.forEach((bullet) => {
-    bullet.draw(ctx);
-    bullet.move();
+  availableUpgrades.forEach((upgrade, index) => {
+    ctx.fillStyle = index === selectedOptionIndex ? "yellow" : "white";
+    ctx.fillText(upgrade.name, canvas.width / 2, menuY + 80 + index * 40);
   });
-
-  enemyManager.updateEnemies(ctx);
-  checkCollision();
-  drawScoreAndLevel();
-
-  if (score >= maxEnemies) {
-    level++;
-    maxEnemies += level * 20; 
-    enemyManager.levelUp(level);
-  }
-
-  requestAnimationFrame(update);
 }
 
-canvas.addEventListener("click", (e) => {
-  if (!isPlaying &&
-    e.offsetX > buttonBounds.x &&
-    e.offsetX < buttonBounds.x + buttonBounds.width &&
-    e.offsetY > buttonBounds.y &&
-    e.offsetY < buttonBounds.y + buttonBounds.height) {
-    isPlaying = true;
-    enemyManager.init();
-    update(); 
+function levelUp() {
+  level++;
+  contEnemigos = 0;
+  showUpgradeMenu = true;
+
+  let incrementoAleatorio = Math.floor(Math.random() * (10 - 5 + 1)) + 5;
+  maxEnemigos += incrementoAleatorio;
+  player.levelUp();
+
+  availableUpgrades = mejoras
+    .obtenerMejorasAleatorias()
+    .map((mejora, index) => ({
+      name: `${index + 1}. ${mejora.texto}`,
+      action: mejora.funcion,
+    }));
+
+  showUpgradeMenu = true;
+  isPlaying = false; 
+
+  resetKeys();
+}
+
+
+function showTemporaryMessage(message, duration) {
+  const titleElement = document.querySelector(".game-title");
+  const originalTitle = titleElement.textContent;
+
+  titleElement.textContent = message;
+  titleElement.classList.add("shake");
+
+  setTimeout(() => {
+    titleElement.textContent = originalTitle;
+    titleElement.classList.remove("shake");
+  }, duration);
+}
+
+startButton.addEventListener("click", () => {
+  if (gameFlagStart == true) {
+    if (!isPlaying && !gameStarted) {
+      gameStarted = true;
+      startButton.disabled = true;
+      isPlaying = true;
+      soundManager.backgroundMusic.play();
+      update();
+    }
+  } else {
+    soundManager.stopGameOverSound();
+    resetGame();
   }
 });
 
-canvas.addEventListener("mousemove", (e) => {
-  if (!isPlaying) {
-    const mouseX = e.offsetX;
-    const mouseY = e.offsetY;
-
-    if (mouseX > buttonBounds.x &&
-      mouseX < buttonBounds.x + buttonBounds.width &&
-      mouseY > buttonBounds.y &&
-      mouseY < buttonBounds.y + buttonBounds.height) {
-      canvas.style.cursor = 'pointer';
-    } else {
-      canvas.style.cursor = 'default'; 
-    }
+restartButton.addEventListener("click", () => {
+  if (gameOverState) {
+    soundManager.stopGameOverSound();
+    resetGame();
   }
 });
 
 document.addEventListener("keydown", (e) => {
-  if (isPlaying) player.handleKeyDown(e, bullets);
+  if (showUpgradeMenu) {
+    if (e.key === "Enter") {
+      if (availableUpgrades[selectedOptionIndex]) {
+        availableUpgrades[selectedOptionIndex].action();
+        showUpgradeMenu = false;
+        isPlaying = true;
+        update();
+      }
+    } else if (e.key === "w") {
+      selectedOptionIndex =
+        (selectedOptionIndex - 1 + availableUpgrades.length) %
+        availableUpgrades.length;
+      update(); 
+    } else if (e.key === "s") {
+      selectedOptionIndex =
+        (selectedOptionIndex + 1) % availableUpgrades.length;
+      update();
+    }
+  } else if (isPlaying) {
+    player.handleKeyDown(e, bullets);
+  }
 });
 document.addEventListener("keyup", (e) => {
   if (isPlaying) player.handleKeyUp(e);
 });
 
+initGame();
 update();
